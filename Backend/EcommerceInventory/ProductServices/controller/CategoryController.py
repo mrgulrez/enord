@@ -30,16 +30,41 @@ class CategorySerializer(serializers.ModelSerializer):
     
     def get_parent_id(self,obj):
         return "#"+str(obj.parent_id.id)+" "+obj.parent_id.name if obj.parent_id else None
-class CategoryListView(generics.ListAPIView):
-    serializer_class = CategorySerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    
 
+
+# class CategoryListView(generics.ListAPIView):
+#     serializer_class = CategorySerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+
+#     def get_queryset(self):
+#         queryset=Categories.objects.filter(parent_id__isnull=True).filter(domain_user_id=self.request.user.domain_user_id.id)
+#         return queryset
+
+#     @CommonListAPIMixin.common_list_decorator(CategorySerializer)
+#     def list(self,request,*args,**kwargs):
+#         return super().list(request,*args,**kwargs)
+
+
+
+
+
+class CategoryListView(generics.ListAPIView):
+    serializer_class      = CategorySerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset=Categories.objects.filter(parent_id__isnull=True).filter(domain_user_id=self.request.user.domain_user_id.id)
-        return queryset
+        user        = self.request.user
+        domain_id   = user.domain_user_id.id if user.domain_user_id else user.id
+
+        return (
+            Categories.objects
+            .filter(parent_id__isnull=True, domain_user_id=domain_id)
+        )
 
     @CommonListAPIMixin.common_list_decorator(CategorySerializer)
-    def list(self,request,*args,**kwargs):
-        return super().list(request,*args,**kwargs)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

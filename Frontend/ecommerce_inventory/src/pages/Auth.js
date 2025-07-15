@@ -9,6 +9,7 @@ import useApi from '../hooks/APIHandler';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import { login } from '../redux/reducer/IsLoggedInReducer';
+import config from '../utils/config';
 
 const Auth = () => {
   const [tab, setTab] = useState(0);
@@ -66,36 +67,71 @@ const Auth = () => {
   };
 
   const doSignup = async(e) => {
+    // e.preventDefault();
+    // let response=await callApi({url:"auth/signup/",method:"POST",body:{username:e.target.username.value,password:e.target.password.value,email:e.target.email.value,profile_pic:"https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"}});
     e.preventDefault();
-    let response=await callApi({url:"auth/signup/",method:"POST",body:{username:e.target.username.value,password:e.target.password.value,email:e.target.email.value,profile_pic:"https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"}});
-    if(response?.data?.access){
-        localStorage.setItem("token",response.data.access);
-        toast.success("Signup Successfully");
-        dispatch(login());
-        navigate("/home");
-    }
-    else{
-        toast.error("Signup failed");
+    const response = await callApi({
+      url: `auth/signup/`,
+      method: "POST",
+      body: {
+        username: e.target.username.value,
+        password: e.target.password.value,
+        email:    e.target.email.value,
+        profile_pic: "https://..."
+      }
+    });
+     
+    console.log ("Response from signup API:");
+    console.log("full response:", response);
+    console.log("response.data:", response.data);
+    console.log("response.data.data:", response.data?.data);
+
+
+
+    const token = response?.data?.data?.access;
+
+    if (token) {
+      localStorage.setItem("token", token);
+      toast.success("Signup Successful");
+      dispatch(login());
+      navigate("/home");
+    } else {
+      // show the backend’s message if it exists
+      const msg =
+        response?.data?.message ||
+        response?.data?.data?.message ||
+        "Signup failed";
+      toast.error(msg);
     }
     console.log(response);
 }
 
-const doLogin = async(e) => {
+
+ const doLogin = async (e) => {
     e.preventDefault();
-    let response=await callApi({url:"auth/login/",method:"POST",body:{username:e.target.username.value,password:e.target.password.value}});
-    console.log(response);
-    if(response?.data?.access){
-      localStorage.setItem("token",response.data.access);
-          toast.success("Login Successfully");
-          dispatch(login());
-          navigate("/home");
 
-    }
-    else{
-          toast.error("Invalid Credentials");
-    }
+    const { username, password } = e.target;
+    const response = await callApi({
+      url: 'auth/login/',
+      method: 'POST',
+      body: {
+        username: username.value,
+        password: password.value,
+      },
+    });
 
- }
+    console.log('Login response', response);
+
+    const token = response?.data?.data?.access || response?.data?.access || null;
+    if (token) {
+      localStorage.setItem('token', token);
+      toast.success('Login successful');
+      dispatch(login());
+      navigate('/home');
+    } else {
+      toast.error(response?.data?.message || 'Invalid credentials');
+    }
+  };
 
   return (
     <Emotion10ThemeProvider theme={theme}>

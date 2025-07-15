@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, is_password_usable
 # Create your models here.
 class Users(AbstractUser):
     email=models.EmailField(unique=True)
@@ -10,7 +10,8 @@ class Users(AbstractUser):
     state=models.CharField(max_length=50,blank=True,null=True)
     pincode=models.CharField(max_length=10,blank=True,null=True)
     country=models.CharField(max_length=50,blank=True,null=True,default='India',choices=(('India','India'),('USA','USA'),('UK','UK'),('Australia','Australia'),('Canada','Canada'),('Germany','Germany'),('France','France'),('Italy','Italy'),('Japan','Japan'),('China','China'),('Russia','Russia'),('Brazil','Brazil'),('South Africa','South Africa'),('Nigeria','Nigeria'),('Mexico','Mexico'),('Argentina','Argentina'),('Spain','Spain'),('Portugal','Portugal'),('Greece','Greece'),('Sweden','Sweden'),('Norway','Norway'),('Finland','Finland'),('Denmark','Denmark'),('Netherlands','Netherlands'),('Belgium','Belgium'),('Switzerland','Switzerland'),('Austria','Austria'),('Poland','Poland'),('Czech Republic','Czech Republic'),('Turkey','Turkey'),('Ukraine','Ukraine'),('Hungary','Hungary'),('Romania','Romania'),('Bulgaria','Bulgaria'),('Croatia','Croatia'),('Slovenia','Slovenia'),('Slovakia','Slovakia'),('Lithuania','Lithuania'),('Latvia','Latvia'),('Estonia','Estonia'),('Ireland','Ireland'),('Scotland','Scotland'),('Wales','Wales'),('Northern Ireland','Northern Ireland'),('New Zealand','New Zealand'),('Singapore','Singapore'),('Malaysia','Malaysia'),('Thailand','Thailand'),('Indonesia','Indonesia'),('Philippines','Philippines'),('Vietnam','Vietnam'),('South Korea','South Korea'),('North Korea','North Korea'),('Taiwan','Taiwan'),('Hong Kong','Hong Kong'),('Macau','Macau'),('Bangladesh','Bangladesh'),('Pakistan','Pakistan'),('Sri Lanka','Sri Lanka'),('Nepal','Nepal'),('Bhutan','Bhutan'),('Maldives','Maldives'),('Afghanistan','Afghanistan'),('Iran','Iran'),('Iraq','Iraq'),('Syria','Syria'),('Lebanon','Lebanon')))
-    profile_pic=models.JSONField()
+    # profile_pic=models.JSONField()
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     account_status=models.CharField(max_length=50,blank=True,null=True,default='Active',choices=(('Active','Active'),('Inactive','Inactive'),('Blocked','Blocked')))
     role=models.CharField(max_length=50,blank=True,null=True,default='Admin',choices=(('Admin','Admin'),('Supplier','Supplier'),('Customer','Customer'),('Staff','Staff')))
     dob=models.DateField(blank=True,null=True)
@@ -36,12 +37,22 @@ class Users(AbstractUser):
     def defaultkey():
         return 'username'
     
+    # def save(self, *args, **kwargs):
+    #     if not self.domain_user_id and self.id:
+    #         self.domain_user_id=Users.objects.get(id=self.id)
+
+    #     if not self.pk or Users.objects.filter(pk=self.pk).values('password').first()['password']!=self.password:
+    #         self.password=make_password(self.password)
+    #     super().save(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if not self.domain_user_id and self.id:
-            self.domain_user_id=Users.objects.get(id=self.id)
+            self.domain_user_id = Users.objects.get(id=self.id)
 
-        if not self.pk or Users.objects.filter(pk=self.pk).values('password').first()['password']!=self.password:
-            self.password=make_password(self.password)
+        # Only hash raw strings.  If it's already a usable hash, leave it alone.
+        if not is_password_usable(self.password):
+            self.password = make_password(self.password)
+
         super().save(*args, **kwargs)
     
 
